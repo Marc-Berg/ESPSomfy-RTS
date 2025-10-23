@@ -1270,7 +1270,7 @@ var security = new Security();
 
 class General {
     initialized = false; 
-    appVersion = 'v2.4.7';
+    appVersion = 'v2.4.7a';
     reloadApp = false;
     init() {
         if (this.initialized) return;
@@ -4258,11 +4258,19 @@ class MQTT {
                 ui.errorMessage('Invalid Password').querySelector('.sub-message').innerHTML = 'The maximum length of the password is 32 characters.';
                 return;
             }
+            if (typeof obj.mqtt.clientId === 'string') {
+                obj.mqtt.clientId = obj.mqtt.clientId.trim();
+                if (obj.mqtt.clientId.length > 64) {
+                    ui.errorMessage('Invalid Client ID').querySelector('.sub-message').innerHTML = 'The maximum length of the client ID is 64 characters.';
+                    return;
+                }
+            }
             if (typeof obj.mqtt.rootTopic === 'string' && obj.mqtt.rootTopic.length > 64) {
                 ui.errorMessage('Invalid Root Topic').querySelector('.sub-message').innerHTML = 'The maximum length of the root topic is 64 characters.';
                 return;
             }
         }
+        if (typeof obj.mqtt.clientId !== 'string') obj.mqtt.clientId = '';
         putJSONSync('/connectmqtt', obj.mqtt, (err, response) => {
             if (err) ui.serviceError(err);
             console.log(response);

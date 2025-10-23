@@ -3,7 +3,7 @@
 #ifndef configsettings_h
 #define configsettings_h
 #include "WResp.h"
-#define FW_VERSION "v2.4.7"
+#define FW_VERSION "v2.4.7a"
 enum class conn_types_t : byte {
     unset = 0x00,
     wifi = 0x01,
@@ -157,6 +157,7 @@ class MQTTSettings: BaseSettings {
     uint16_t port = 1883;
     char username[33] = "";
     char password[33] = "";
+    char clientId[65] = "";
     char rootTopic[65] = "";
     char discoTopic[65] = "homeassistant";
     bool begin();
@@ -165,6 +166,7 @@ class MQTTSettings: BaseSettings {
     bool toJSON(JsonObject &obj);
     void toJSON(JsonResponse &json);
     bool fromJSON(JsonObject &obj);
+    void ensureClientId();
 };
 class ConfigSettings: BaseSettings {
   public:

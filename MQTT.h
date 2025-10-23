@@ -7,7 +7,7 @@ class MQTTClass {
   public:
     uint64_t lastConnect = 0;
     bool suspended = false;
-    char clientId[32] = {'\0'};
+    char clientId[65] = {'\0'};
     bool begin();
     bool loop();
     bool end();

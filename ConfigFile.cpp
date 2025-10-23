@@ -7,7 +7,7 @@
 
 extern Preferences pref;
 
-#define SHADE_HDR_VER 24
+#define SHADE_HDR_VER 25
 #define SHADE_HDR_SIZE 76
 #define SHADE_REC_SIZE 276
 #define GROUP_REC_SIZE 200
@@ -643,6 +643,8 @@ bool ShadeConfigFile::readNetRecord(restore_options_t &opts) {
         this->readVarString(settings.MQTT.hostname, sizeof(settings.MQTT.hostname));
         settings.MQTT.port = this->readUInt16(1883);
         settings.MQTT.pubDisco = this->readBool(false);
+        if(this->header.version >= 25)
+          this->readVarString(settings.MQTT.clientId, sizeof(settings.MQTT.clientId));
         this->readVarString(settings.MQTT.rootTopic, sizeof(settings.MQTT.rootTopic));
         this->readVarString(settings.MQTT.discoTopic, sizeof(settings.MQTT.discoTopic));
       }
@@ -651,10 +653,13 @@ bool ShadeConfigFile::readNetRecord(restore_options_t &opts) {
         this->skipValue(sizeof(settings.MQTT.hostname));
         this->skipValue(6); // Port
         this->skipValue(6); // pubDisco
+        if(this->header.version >= 25)
+          this->skipValue(sizeof(settings.MQTT.clientId));
         this->skipValue(sizeof(settings.MQTT.rootTopic));
         this->skipValue(sizeof(settings.MQTT.discoTopic));
       }
     }
+    if(opts.mqtt) settings.MQTT.ensureClientId();
     // Now lets check to see if we are the same board.  If we are then we will restore
     // the ethernet phy settings.
     if(opts.network) {
@@ -1010,6 +1015,7 @@ bool ShadeConfigFile::writeSettingsRecord() {
   return true;
 }
 bool ShadeConfigFile::writeNetRecord() {
+  settings.MQTT.ensureClientId();
   this->writeUInt8(static_cast<uint8_t>(settings.connType));
   this->writeBool(settings.IP.dhcp); 
   this->writeVarString(settings.IP.ip.toString().c_str());
@@ -1021,6 +1027,7 @@ bool ShadeConfigFile::writeNetRecord() {
   this->writeVarString(settings.MQTT.hostname);
   this->writeUInt16(settings.MQTT.port);
   this->writeBool(settings.MQTT.pubDisco);
+  this->writeVarString(settings.MQTT.clientId);
   this->writeVarString(settings.MQTT.rootTopic);
   this->writeVarString(settings.MQTT.discoTopic);
   this->writeUInt8(settings.Ethernet.boardType);

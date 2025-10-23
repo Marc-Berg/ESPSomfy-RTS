@@ -195,8 +195,22 @@ bool MQTTClass::connect() {
   }
   if(settings.MQTT.enabled && !this->suspended) {
     if(this->lastConnect + 10000 > millis()) return false;    
-    uint64_t mac = ESP.getEfuseMac();
-    snprintf(this->clientId, sizeof(this->clientId), "client-%08x%08x", (uint32_t)((mac >> 32) & 0xFFFFFFFF), (uint32_t)(mac & 0xFFFFFFFF));
+    settings.MQTT.ensureClientId();
+    char fallbackId[65] = { '\0' };
+    const char *configuredId = settings.MQTT.clientId;
+    if(strlen(configuredId) == 0) {
+      uint64_t mac = ESP.getEfuseMac();
+      snprintf(fallbackId, sizeof(fallbackId), "client-%08x%08x", (uint32_t)((mac >> 32) & 0xFFFFFFFF), (uint32_t)(mac & 0xFFFFFFFF));
+      configuredId = fallbackId;
+    }
+    strlcpy(this->clientId, configuredId, sizeof(this->clientId));
+    if(this->clientId[0] == '\0') {
+      if(fallbackId[0] == '\0') {
+        uint64_t mac = ESP.getEfuseMac();
+        snprintf(fallbackId, sizeof(fallbackId), "client-%08x%08x", (uint32_t)((mac >> 32) & 0xFFFFFFFF), (uint32_t)(mac & 0xFFFFFFFF));
+      }
+      strlcpy(this->clientId, fallbackId, sizeof(this->clientId));
+    }
     if(strlen(settings.MQTT.protocol) > 0 && strlen(settings.MQTT.hostname) > 0) {
       mqttClient.setServer(settings.MQTT.hostname, settings.MQTT.port);
       char lwtTopic[128] = "status";

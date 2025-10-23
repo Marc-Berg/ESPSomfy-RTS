@@ -294,6 +294,7 @@ uint16_t ConfigSettings::calcNetRecSize() {
     + strlen(this->MQTT.hostname) + 3
     + 6 // MQTT Port
     + 6 // PubDisco
+    + strlen(this->MQTT.clientId) + 3
     + strlen(this->MQTT.rootTopic) + 3
     + strlen(this->MQTT.discoTopic) + 3
     + 4 // ETH.boardType
@@ -316,6 +317,7 @@ void MQTTSettings::toJSON(JsonResponse &json) {
   json.addElem("port", (uint32_t)this->port);
   json.addElem("username", this->username);
   json.addElem("password", this->password);
+  json.addElem("clientId", this->clientId);
   json.addElem("rootTopic", this->rootTopic);
   json.addElem("discoTopic", this->discoTopic);
 }
@@ -328,6 +330,7 @@ bool MQTTSettings::toJSON(JsonObject &obj) {
   obj["port"] = this->port;
   obj["username"] = this->username;
   obj["password"] = this->password;
+  obj["clientId"] = this->clientId;
   obj["rootTopic"] = this->rootTopic;
   obj["discoTopic"] = this->discoTopic;
   return true;
@@ -339,12 +342,15 @@ bool MQTTSettings::fromJSON(JsonObject &obj) {
   this->parseValueString(obj, "hostname", this->hostname, sizeof(this->hostname));
   this->parseValueString(obj, "username", this->username, sizeof(this->username));
   this->parseValueString(obj, "password", this->password, sizeof(this->password));
+  this->parseValueString(obj, "clientId", this->clientId, sizeof(this->clientId));
   this->parseValueString(obj, "rootTopic", this->rootTopic, sizeof(this->rootTopic));
   this->parseValueString(obj, "discoTopic", this->discoTopic, sizeof(this->discoTopic));
   if(obj.containsKey("port")) this->port = obj["port"];
+  this->ensureClientId();
   return true;
 }
 bool MQTTSettings::save() {
+  this->ensureClientId();
   pref.begin("MQTT");
   pref.clear();
   pref.putString("protocol", this->protocol);
@@ -356,6 +362,7 @@ bool MQTTSettings::save() {
   pref.putBool("enabled", this->enabled);
   pref.putBool("pubDisco", this->pubDisco);
   pref.putString("discoTopic", this->discoTopic);
+  pref.putString("clientId", this->clientId);
   pref.end();
   return true;
 }
@@ -370,8 +377,18 @@ bool MQTTSettings::load() {
   this->enabled = pref.getBool("enabled", false);
   this->pubDisco = pref.getBool("pubDisco", false);
   pref.getString("discoTopic", this->discoTopic, sizeof(this->discoTopic));
+  pref.getString("clientId", this->clientId, sizeof(this->clientId));
   pref.end();
+  this->ensureClientId();
   return true;
+}
+void MQTTSettings::ensureClientId() {
+  _trim(this->clientId);
+  if(strlen(this->clientId) == 0) {
+    uint64_t mac = ESP.getEfuseMac();
+    snprintf(this->clientId, sizeof(this->clientId), "client-%08x%08x", (uint32_t)((mac >> 32) & 0xFFFFFFFF), (uint32_t)(mac & 0xFFFFFFFF));
+  }
+  this->clientId[sizeof(this->clientId) - 1] = '\0';
 }
 bool ConfigSettings::toJSON(DynamicJsonDocument &doc) {
   doc["fwVersion"] = this->fwVersion.name;

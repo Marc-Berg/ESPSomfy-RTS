@@ -414,6 +414,10 @@
                             <label for="fldMqttPassword">Password</label>
                         </div>
                         <div class="field-group">
+                            <input id="fldMqttClientId" name="mqtt-clientid" type="text" length=64 data-bind="mqtt.clientId" placeholder="Client ID (blank for default)">
+                            <label for="fldMqttClientId">Client ID</label>
+                        </div>
+                        <div class="field-group">
                             <input id="fldMqttTopic" name="mqtt-topic" type="text" length=64 data-bind="mqtt.rootTopic" placeholder="Root Topic">
                             <label for="fldMqttTopic">Root Topic</label>
                         </div>
